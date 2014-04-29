@@ -13,7 +13,7 @@
 	li $v0, 8
 	syscall
 	
-	move $t0, $a0 		# put input in $t0
+	move $s0, $a0 		# put input in $s0
 	
 
 	la $a0, shift_prompt	# print shift prompt
@@ -23,20 +23,21 @@
 	la $v0, 5		# get shift amount
 	syscall
 	
-	move $t1, $v0 		# put shift in $t1
+	move $s1, $v0 		# put shift in $s1
 	
-	lb $t5, ($t0)		# load first byte of input into $t5
-	add $t5, $t5, $t1	# add shift amount to first byte
-	la $a0, ($t5)		# put shifted byte into $a0
-	li $v0, 11		# print $a0
-	syscall
-	
-	lb $t5, 1($t0)		# load second byte into $t5
-	add $t5, $t5, $t1	# add shift amount to $t5
-	la $a0, ($t5)		# move shifted byte into $a0
-	li $v0, 11		# print $a0
-	syscall
+	add $t0, $zero, $zero 	# loop counter in $t0
 
-	# exit program
+Loop:
+	add $t1, $s0, $t0	# $t1 = address of current byte = starting location + loop counter
+	lb $t2, ($t1)		# load current byte of input into $t2
+	beq $t2, 0, Exit	# if we reached null characters, quit looping
+	add $t2, $t2, $s1	# add shift amount to current byte
+	la $a0, ($t2)		# put shifted byte into $a0
+	li $v0, 11		# print $a0
+	syscall
+	addi $t0, $t0, 1	# increment loop counter
+	j Loop	
+
+Exit:
 	li $v0, 10
 	syscall
