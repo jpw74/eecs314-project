@@ -20,7 +20,7 @@
 	li $v0, 4
 	syscall
 
-	la $v0, 5		# get shift amount
+	li $v0, 5		# get shift amount
 	syscall
 	
 	move $s1, $v0 		# put shift in $s1
