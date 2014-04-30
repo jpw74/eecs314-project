@@ -22,24 +22,18 @@
 	jal GetOutput		# get output type in $t1, file name in $t2 if applicable
 	jal GetCipher		# get cipher type in $t3
 	
-	la $s5, output
+	la $s5, output		# $s5 = starting address of output memory 
 	
 	beq $s3, 1, Caesar
 
-LoopReturn:
-	lb $t0, 1($s5)
-	la $a0, ($t0)
-	li $v0, 11
-	syscall
-	
+CipherReturn:
+	#add $t0, $zero, $zero	# initialize loop counter for output
+	beq $s1, 1, CLIOutput	# at this point $s1 can't be anything else because of NotImplemented and InvalidInput
+				# but branching anywhere because we'll beq $s1, 2, FileOutput sometime in the future
+
 	j Exit
 
 Caesar:
-	#lb $t0, ($s4)
-	#la $a0, ($t0)
-	#li $v0, 11
-	#syscall
-	#j Exit
 	la $a0, caesar_shift	# print shift prompt
 	li $v0, 4
 	syscall
@@ -55,16 +49,12 @@ Caesar:
 CaesarLoop:
 	add $t2, $s4, $t1	# $t2 = address of current byte = starting location + loop counter
 	lb $t3, ($t2)		# load current byte of input into $t3
-	beq $t3, 0, LoopReturn	# if we reached null characters, quit looping
+	beq $t3, 0, CipherReturn# if we reached null characters, quit looping
 	add $t3, $t3, $t0	# $t3 = current byte + shift amount
-	add $t4, $s5, $t1
-	sb $t3, ($t4)
-	#la $a0, ($t3)		# put shifted byte into $a0
-	#li $v0, 11		# print $a0
-	#syscall
+	add $t4, $s5, $t1	# $t4 = current output memory location = starting location of output memory + loop counter
+	sb $t3, ($t4)		# store shifted byte into current output memory location
 	addi $t1, $t1, 1	# increment loop counter
 	j CaesarLoop	
-
 
 GetInput:
 	la $a0, in_type_prompt	# display input prompt
@@ -108,12 +98,12 @@ GetOutput:
 	
 	la $t9, GetOutput	# start over if they chose file output
 	beq $s1, 2, NotImplemented
-	beq $s1, 1, CLIOutput
+	beq $s1, 1, DummyReturn
 	
 	la $t9, GetOutput	# invalid input if fallen through to here
 	j InvalidInput		# using InvalidInput label for consistency
 	
-CLIOutput:
+DummyReturn:
 	# dummy routine to exit from GetOutput - $ra is saved from jal'ing into GetOutput
 	jr $ra
 
@@ -134,10 +124,17 @@ GetCipher:
 	
 	jr $ra
 
+CLIOutput:
+	lb $t0, ($s5)
+	la $a0, ($t0)
+	li $v0, 11
+	syscall
+	j Exit
+
 InvalidInput:
 	# helper routine for invalid input
 	# prints invalid input message, then jumps to whatever label was set in $t9
-	# NEED TO SET $t9 TO WORK
+	# NEED TO SET $t9 BEFORE CALLING FOR IT TO WORK
 	la $a0, invalid_input
 	li $v0, 4
 	syscall
@@ -146,13 +143,12 @@ InvalidInput:
 NotImplemented:
 	# helper routine features that aren't implemented yet
 	# prints not implemented message, then jumps to whatever label was set in $t9
-	# NEED TO SET $t9 TO WORK
+	# NEED TO SET $t9 BEFORE CALLING FOR IT TO WORK
 	la $a0, not_implemented
 	li $v0, 4
 	syscall
 	jr $t9
 	
-
 Exit:
 	li $v0, 10
 	syscall
