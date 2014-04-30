@@ -1,0 +1,99 @@
+# Rail Fence Cipher
+
+.data
+	buffer: 	.space 	20
+	string_prompt: 	.asciiz "\nEnter plaintext: \n"
+	rail_prompt:	.asciiz "\nEnter rail count: \n"
+.text
+
+	la $a0, string_prompt	# print plaintext prompt
+	li $v0, 4
+	syscall
+
+	la $a0, buffer			# get plaintext
+	li $a1, 20
+	li $v0, 8
+	syscall
+	
+	move $s0, $a0 			# put plaintext in $s0
+	
+
+	la $a0, rail_prompt	# print shift prompt
+	li $v0, 4
+	syscall
+
+	la $v0, 5				# get rail count
+	syscall
+	
+	move $s1, $v0 			# put rail count in $s1, this is the row count
+	
+	add $t0, $zero, $zero 	# loop counter in $t0
+
+Count_Plaintext:
+    add $t1, $s0, $t0
+    lb $t2, ($t1)
+    beq  $t2, 0, Create_Rail_Fence
+	addi $t0, $t0, 1		# increment counter
+	j Count_Plaintext
+
+Dec_Row_Count:
+	addi $t1, $t1, -1		# decrement row count
+	j Loop
+
+Inc_Row_Count:	
+	addi $t1, $t1, 1		# increment row count
+	j Loop
+
+Create_Rail_Fence:
+	addi $t0, $t0, -1 		# take one off length to account for null character
+	move $s2, $t0			# store plaintext length in $s2, this is the column count
+	li $t0, 0				# reset loop counter
+
+	li $t3, 1				# byte count of each cell in 2D array
+	mult $s1, $s2			# multiply array dimensions row/column
+	mflo $a0
+	mult $a0, $t3			# assign byte counts
+	li $v0, 9				# allocate heap memory for array
+	syscall
+	move $s3, $v0			# store array address in $s3
+
+	add $t1, $zero, $zero				# initialize row counter
+
+Loop:
+	add $t2, $s0, $t0		# $t2 = address of current byte = starting location + loop/column counter
+	lb $t3, ($t2)			# load current byte of input into $t3
+	beq $t3, 0, Reset_Counter		# if we reached null characters, quit looping and print array
+
+	# Store in column major order in array at $s3
+	# array address = row + (col * numrows)
+	# $t4 = $t1 + ($t0 * $s1)
+
+	mult $t0, $s1			# multiply current column num by total number of rows
+	mflo $t4				# move result to $t4
+	add $t4, $t4, $t1		# add row count to $t4
+	add $t4, $s3, $t4		# $t4 = address in array for current character
+	sb $t3, ($t4)			# load current byte into array address
+
+	addi $t0, $t0, 1			# increment column counter
+	beq $t1, 2, Dec_Row_Count	# if on bottom row, decrement row count
+	beq $t1, 0, Inc_Row_Count	# if on top row, increment row count
+	j Loop	
+
+Reset_Counter:
+	add $t0, $zero, $zero				# reset loop counter
+
+Print:
+	add $t1, $s3, $t0
+	lb $t2, ($t1)
+	bgt $t0, $s2, Exit			# if null, exit
+
+	la $a0, ($t2)				# put shifted byte into $a0
+	li $v0, 11					# print $a0
+	syscall
+
+	addi $t0, $t0, 1			# increment iterator
+	j Print
+
+Exit:
+	li $v0, 10
+	syscall
