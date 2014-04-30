@@ -33,6 +33,10 @@ CipherReturn:
 
 	j Exit
 
+########## END OF PROGRAM - EVERYTHING BELOW IS CALLED INTO AND RETURNS ABOVE ##########
+
+
+########## CAESAR CIPHER ##########
 Caesar:
 	la $a0, caesar_shift	# print shift prompt
 	li $v0, 4
@@ -49,13 +53,16 @@ Caesar:
 CaesarLoop:
 	add $t2, $s4, $t1	# $t2 = address of current byte = starting location + loop counter
 	lb $t3, ($t2)		# load current byte of input into $t3
-	beq $t3, 0, CipherReturn# if we reached null characters, quit looping
+	beq $t3, 0, CipherReturn# if we reached null characters, quit looping and return above
 	add $t3, $t3, $t0	# $t3 = current byte + shift amount
 	add $t4, $s5, $t1	# $t4 = current output memory location = starting location of output memory + loop counter
 	sb $t3, ($t4)		# store shifted byte into current output memory location
 	addi $t1, $t1, 1	# increment loop counter
 	j CaesarLoop	
+########### END CAESAR CIPHER ##########
 
+
+########## HELPER ROUTINES HERE TIL END ##########
 GetInput:
 	la $a0, in_type_prompt	# display input prompt
 	li $v0, 4
@@ -84,7 +91,7 @@ CLIInput:
 	syscall
 	
 	move $s4, $a0 		# put input in $s4
-	jr $ra			# return into main
+	jr $ra			# return into main - $ra was set when jal'ing into GetInput
 
 GetOutput:
 	la $a0, out_type_prompt	# display output type prompt
@@ -136,7 +143,7 @@ CLIOutput:
 
 InvalidInput:
 	# helper routine for invalid input
-	# prints invalid input message, then jumps to whatever label was set in $t9
+	# prints invalid input message, then returns to whatever label was set in $t9
 	# NEED TO SET $t9 BEFORE CALLING FOR IT TO WORK
 	la $a0, invalid_input
 	li $v0, 4
