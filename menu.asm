@@ -10,7 +10,7 @@
 	buffer: 		.space 		20
 	in_type_prompt:		.asciiz		"Would you like to input from the command line [1] or a file [2]? "
 	out_type_prompt:	.asciiz		"Would you like to write to the command line [1] or a file [2]? "
-	cipher_prompt:		.asciiz		"Select which cipher you would like:\n[1] Caesar\n[2] Aphine\n"
+	cipher_prompt:		.asciiz		"Select which cipher you would like:\n[1] Caesar\n[2] Affine\n"
 	string_prompt:		.asciiz		"Enter your string: "
 	not_implemented:	.asciiz		"This feature has not been implemented yet.\n"
 	invalid_input:		.asciiz		"Invalid input.\n"
@@ -21,10 +21,39 @@
 	jal GetOutput		# get output type in $t1, file name in $t2 if applicable
 	jal GetCipher		# get cipher type in $t3
 	
-	#beq $t3, 1, Caesar
-	#beq $t3, 2, NotImplemented
+	beq $s3, 1, Caesar
 	
 	j Exit
+
+Caesar:
+	#lb $t0, ($s4)
+	#la $a0, ($t0)
+	#li $v0, 11
+	#syscall
+	#j Exit
+	la $a0, caesar_shift	# print shift prompt
+	li $v0, 4
+	syscall
+
+	li $v0, 5		# get shift amount
+	syscall
+	
+	move $t0, $v0 		# put shift in $t0
+	
+	add $t1, $zero, $zero 	# loop counter in $t1
+	# FALL THROUGH TO CaesarLoop
+
+CaesarLoop:
+	add $t2, $s4, $t1	# $t2 = address of current byte = starting location + loop counter
+	lb $t3, ($t2)		# load current byte of input into $t3
+	beq $t3, 0, Exit	# if we reached null characters, quit looping
+	add $t3, $t3, $t0	# add shift amount to current byte
+	la $a0, ($t3)		# put shifted byte into $a0
+	li $v0, 11		# print $a0
+	syscall
+	addi $t1, $t1, 1	# increment loop counter
+	j CaesarLoop	
+
 
 GetInput:
 	la $a0, in_type_prompt	# display input prompt
