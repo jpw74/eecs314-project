@@ -27,7 +27,7 @@
 	beq $s3, 1, Caesar
 
 CipherReturn:
-	#add $t0, $zero, $zero	# initialize loop counter for output
+	add $t0, $zero, $zero	# initialize loop counter for output
 	beq $s1, 1, CLIOutput	# at this point $s1 can't be anything else because of NotImplemented and InvalidInput
 				# but branching anywhere because we'll beq $s1, 2, FileOutput sometime in the future
 
@@ -125,11 +125,14 @@ GetCipher:
 	jr $ra
 
 CLIOutput:
-	lb $t0, ($s5)
-	la $a0, ($t0)
+	add $t1, $s5, $t0
+	lb $t2, ($t1)
+	beq $t2, 0 Exit
+	la $a0, ($t2)
 	li $v0, 11
 	syscall
-	j Exit
+	addi $t0, $t0, 1
+	j CLIOutput
 
 InvalidInput:
 	# helper routine for invalid input
