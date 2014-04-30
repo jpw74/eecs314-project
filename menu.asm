@@ -8,6 +8,7 @@
 
 .data
 	buffer: 		.space 		20
+	output:			.space		20
 	in_type_prompt:		.asciiz		"Would you like to input from the command line [1] or a file [2]? "
 	out_type_prompt:	.asciiz		"Would you like to write to the command line [1] or a file [2]? "
 	cipher_prompt:		.asciiz		"Select which cipher you would like:\n[1] Caesar\n[2] Affine\n"
@@ -21,7 +22,15 @@
 	jal GetOutput		# get output type in $t1, file name in $t2 if applicable
 	jal GetCipher		# get cipher type in $t3
 	
+	la $s5, output
+	
 	beq $s3, 1, Caesar
+
+LoopReturn:
+	lb $t0, 1($s5)
+	la $a0, ($t0)
+	li $v0, 11
+	syscall
 	
 	j Exit
 
@@ -46,11 +55,13 @@ Caesar:
 CaesarLoop:
 	add $t2, $s4, $t1	# $t2 = address of current byte = starting location + loop counter
 	lb $t3, ($t2)		# load current byte of input into $t3
-	beq $t3, 0, Exit	# if we reached null characters, quit looping
-	add $t3, $t3, $t0	# add shift amount to current byte
-	la $a0, ($t3)		# put shifted byte into $a0
-	li $v0, 11		# print $a0
-	syscall
+	beq $t3, 0, LoopReturn	# if we reached null characters, quit looping
+	add $t3, $t3, $t0	# $t3 = current byte + shift amount
+	add $t4, $s5, $t1
+	sb $t3, ($t4)
+	#la $a0, ($t3)		# put shifted byte into $a0
+	#li $v0, 11		# print $a0
+	#syscall
 	addi $t1, $t1, 1	# increment loop counter
 	j CaesarLoop	
 
