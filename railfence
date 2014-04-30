@@ -44,6 +44,14 @@ Inc_Row_Count:
 	addi $t1, $t1, 1		# increment row count
 	j Loop
 
+Flip_Row_Inc:
+	li $t5, 1
+	j Inc_Row_Count
+
+Flip_Row_Dec:
+	li $t5, 0
+	j Dec_Row_Count
+
 Create_Rail_Fence:
 	addi $t0, $t0, -1 		# take one off length to account for null character
 	move $s2, $t0			# store plaintext length in $s2, this is the column count
@@ -57,41 +65,65 @@ Create_Rail_Fence:
 	syscall
 	move $s3, $v0			# store array address in $s3
 
-	add $t1, $zero, $zero				# initialize row counter
+	add $t1, $zero, $zero	# initialize row counter
+	add $t5, $zero, $zero	# initialize row state, 1 is increment, 0 is decrement
 
 Loop:
 	add $t2, $s0, $t0		# $t2 = address of current byte = starting location + loop/column counter
-	lb $t3, ($t2)			# load current byte of input into $t3
+	lb $t3, ($t2)					# load current byte of input into $t3
 	beq $t3, 0, Reset_Counter		# if we reached null characters, quit looping and print array
 
 	# Store in column major order in array at $s3
 	# array address = row + (col * numrows)
 	# $t4 = $t1 + ($t0 * $s1)
 
-	mult $t0, $s1			# multiply current column num by total number of rows
-	mflo $t4				# move result to $t4
-	add $t4, $t4, $t1		# add row count to $t4
-	add $t4, $s3, $t4		# $t4 = address in array for current character
-	sb $t3, ($t4)			# load current byte into array address
+	mult $t0, $s1				# multiply current column num by total number of rows
+	mflo $t4					# move result to $t4
+	add $t4, $t4, $t1			# add row count to $t4
+	add $t4, $s3, $t4			# $t4 = address in array for current character
+	sb $t3, ($t4)				# store current byte in array address
 
 	addi $t0, $t0, 1			# increment column counter
-	beq $t1, 2, Dec_Row_Count	# if on bottom row, decrement row count
-	beq $t1, 0, Inc_Row_Count	# if on top row, increment row count
-	j Loop	
+	beq $t1, $s1, Flip_Row_Dec	# reached bottom row
+	beq $t1, 0, Flip_Row_Inc	# reached top row
+	beq $t5, 0, Dec_Row_Count	# if decreasing, decrement
+	beq $t5, 1, Inc_Row_Count	# if increasing, increment
+
+	j Loop 						# iterate to next character	
+
+Add_Random:
+	li $a1, 128					# upper bound of random 
+	li $v0, 42					# random int with upper bound
+	syscall
+	sb $a0, ($t1)
+
+Loop_Array:
+	add $t1, $s3, $t0			# $t1 = address of current byte in array
+	lb $t2, ($t1)				# load current byte from array into $t2
+	beq $t2, 0, Add_Random 	
+	bgt $t0, $t4, Reset_Print
+	add $t0, $t0, 1				# increment iterator
+	j Loop_Array
 
 Reset_Counter:
-	add $t0, $zero, $zero				# reset loop counter
+	add $t0, $zero, $zero			# reset loop counter
+	mult $s1, $s2
+	mflo $t4						# total length of array
+	j Loop_Array
+
+Reset_Print:
+	add $t0, $zero, $zero			# reset loop counter
 
 Print:
 	add $t1, $s3, $t0
 	lb $t2, ($t1)
-	bgt $t0, $s2, Exit			# if null, exit
+	bgt $t0, $t4, Exit			# if null, exit
 
 	la $a0, ($t2)				# put shifted byte into $a0
 	li $v0, 11					# print $a0
 	syscall
 
-	addi $t0, $t0, 1			# increment iterator
+	add $t0, $t0, 1			# increment iterator
 	j Print
 
 Exit:
