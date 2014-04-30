@@ -1,10 +1,10 @@
 # REGISTER USAGE
-# $t0	input type	1 = CLI, 2 = file
-# $t1	output type	1 = CLI, 2 = file
-# $t2	output file	if applicable
-# $t3	cipher type	1 = Caesar, 2 = Aphine
-# $s0	input string
-# $s1 	output string
+# $s0	input type	1 = CLI, 2 = file
+# $s1	output type	1 = CLI, 2 = file
+# $s2	output file	if applicable
+# $s3	cipher type	1 = Caesar, 2 = Aphine
+# $s4	input string
+# $s5 	output string
 
 .data
 	buffer: 		.space 		20
@@ -34,11 +34,11 @@ GetInput:
 	li $v0, 5		# get input type
 	syscall
 	
-	move $t0, $v0		# put input type in $t0
+	move $s0, $v0		# put input type in $s0
 	
 	la $t9, GetInput	# start over if they choose file input
-	beq $t0, 2, NotImplemented
-	beq $t0, 1, CLIInput
+	beq $s0, 2, NotImplemented
+	beq $s0, 1, CLIInput
 
 	la $t9, GetInput	# start over if fallen through to here
 	j InvalidInput		# using helper InvalidInput label for consistency
@@ -53,7 +53,7 @@ CLIInput:
 	li $v0, 8
 	syscall
 	
-	move $s0, $a0 		# put input in $s0
+	move $s4, $a0 		# put input in $s4
 	jr $ra			# return into main
 
 GetOutput:
@@ -64,11 +64,11 @@ GetOutput:
 	li $v0, 5		# get output type
 	syscall
 	
-	move $t1, $v0		# put output type in $t1
+	move $s1, $v0		# put output type in $s1
 	
 	la $t9, GetOutput	# start over if they chose file output
-	beq $t1, 2, NotImplemented
-	beq $t1, 1, CLIOutput
+	beq $s1, 2, NotImplemented
+	beq $s1, 1, CLIOutput
 	
 	la $t9, GetOutput	# invalid input if fallen through to here
 	j InvalidInput		# using InvalidInput label for consistency
@@ -85,10 +85,10 @@ GetCipher:
 	li $v0, 5		# get cipher type
 	syscall
 	
-	move $t3, $v0		# put cipher type in $t3
+	move $s3, $v0		# put cipher type in $s3
 
-	slti $t8, $t3, 1
-	sgt $t8, $t3, 2
+	slti $t0, $s3, 1	# if cipher type is less than 1 or greater than 2 => invalid input => start over
+	sgt $t0, $s3, 2
 	la $t9, GetCipher
 	beq $t8, 1, InvalidInput
 	
