@@ -11,7 +11,7 @@
 	output:			.space		20
 	in_type_prompt:		.asciiz		"Would you like to input from the command line [1] or a file [2]? "
 	out_type_prompt:	.asciiz		"Would you like to write to the command line [1] or a file [2]? "
-	cipher_prompt:		.asciiz		"Select which cipher you would like:\n[1] Caesar\n[2] Affine\n[3] Vigenere\n[4] Railfence Transposition\n"
+	cipher_prompt:		.asciiz		"Select which cipher you would like:\n[1] Caesar\n[2] Affine\n[3] Vigenere\n[4] Railfence Transposition\n[5] Playfair\n"
 	string_prompt:		.asciiz		"Enter your string: "
 	not_implemented:	.asciiz		"This feature has not been implemented yet.\n"
 	invalid_input:		.asciiz		"Invalid input.\n"
@@ -327,6 +327,9 @@ GetCipher:
 	syscall
 	
 	move $s3, $v0		# put cipher type in $s3
+	
+	la $t9, GetCipher	# playfair not implemented
+	beq $s3, 5, NotImplemented
 
 	slti $t0, $s3, 1	# if cipher type is less than 1 or greater than 2 => invalid input => start over
 	sgt $t0, $s3, 4
