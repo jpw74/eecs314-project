@@ -7,18 +7,16 @@
 # $s5 	output string
 
 .data
-	buffer: 		.space 		50
+	buffer: 		.space 		20
 	output:			.space		20
 	in_type_prompt:		.asciiz		"Would you like to input from the command line [1] or a file [2]? "
 	out_type_prompt:	.asciiz		"Would you like to write to the command line [1] or a file [2]? "
 	cipher_prompt:		.asciiz		"Select which cipher you would like:\n[1] Caesar\n[2] Affine\n[3] Vigenere\n"
 	string_prompt:		.asciiz		"Enter your string: "
-	file_prompt:		.asciiz		"Enter file name (in current directory): "
 	not_implemented:	.asciiz		"This feature has not been implemented yet.\n"
 	invalid_input:		.asciiz		"Invalid input.\n"
 	shift_prompt:		.asciiz		"Enter shift amount: "
-	key_prompt:		.asciiz		"Enter keyword (repeat until it matches the length of the plaintext): "
-	file_name:		.asciiz		"input.txt"
+	key_prompt:			.asciiz		"Enter keyword (repeat until it matches the length of the plaintext): "
 
 .text
 	jal GetInput		# get input type in $s0, input in $s4
@@ -105,8 +103,6 @@ AffineLoop:
 	j AffineLoop	
 ########## END AFFINE CIPHER ##########
 
-
-########## START VIGENERE CIPHER ##########
 Vigenere:
 	# Key string
 	la $a0, key_prompt		# print key prompt
@@ -139,8 +135,6 @@ VigenereLoop:
 	addi $t2, $t2, 1			# increment loop counter
 
 	j VigenereLoop	
-########## END VIGENERE CIPHER ##########
-
 
 ########## HELPER ROUTINES HERE TIL END ##########
 GetInput:
@@ -153,8 +147,8 @@ GetInput:
 	
 	move $s0, $v0		# put input type in $s0
 	
-	#la $t9, GetInput	# start over if they choose file input
-	beq $s0, 2, FileInput
+	la $t9, GetInput	# start over if they choose file input
+	beq $s0, 2, NotImplemented
 	beq $s0, 1, CLIInput
 
 	la $t9, GetInput	# start over if fallen through to here
@@ -172,6 +166,7 @@ CLIInput:
 	
 	move $s4, $a0 		# put input in $s4
 	jr $ra			# return into main - $ra was set when jal'ing into GetInput
+<<<<<<< HEAD
 	
 FileInput:
 	la $a0, file_prompt	# print file prompt
@@ -204,6 +199,8 @@ FileInput:
 	move $s4, $a0
 	
 	jr $ra
+=======
+>>>>>>> parent of 5d4570b... Encrypt a given file
 
 GetOutput:
 	la $a0, out_type_prompt	# display output type prompt
