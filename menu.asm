@@ -143,6 +143,7 @@ VigenereLoop:
 	j VigenereLoop	
 ########## END VIGENERE CIPHER ##########
 
+
 ########## BEGIN RAILFENCE CIPHER ##########
 Railfence:
 	la $a0, rail_prompt	# print shift prompt
@@ -243,6 +244,7 @@ Reset_Counter:
 	j Loop_Array
 ########## END RAILFENCE CIPHER ##########
 
+
 ########## HELPER ROUTINES HERE TIL END ##########
 GetInput:
 	la $a0, in_type_prompt	# display input prompt
@@ -254,9 +256,8 @@ GetInput:
 	
 	move $s0, $v0		# put input type in $s0
 	
-	la $t9, GetInput	# start over if they choose file input
-	beq $s0, 2, FileInput
 	beq $s0, 1, CLIInput
+	beq $s0, 2, FileInput
 
 	la $t9, GetInput	# start over if fallen through to here
 	j InvalidInput		# using helper InvalidInput label for consistency
@@ -306,17 +307,13 @@ GetOutput:
 	
 	move $s1, $v0		# put output type in $s1
 	
-	la $t9, GetOutput	# start over if they chose file output
-	beq $s1, 2, DummyReturn
-	beq $s1, 1, DummyReturn
+	slti $t0, $s1, 1	# invalid input if output type is less than 1 or greater than 2
+	sgt $t0, $s1, 2
+	la $t9, GetOutput
+	beq $t0, 1, InvalidInput
 	
-	la $t9, GetOutput	# invalid input if fallen through to here
-	j InvalidInput		# using InvalidInput label for consistency
-	
-DummyReturn:
-	# dummy routine to exit from GetOutput - $ra is saved from jal'ing into GetOutput
 	jr $ra
-
+	
 GetCipher:
 	la $a0, cipher_prompt	# display cipher type prompt
 	li $v0, 4
