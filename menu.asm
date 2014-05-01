@@ -1,8 +1,15 @@
+# Timothy Sesler, Jason Walsh
+# S. Bhunia
+# EECS 314: Final Project
+# 2 May 2014
+
+# Classical Encryption Algorithms in MIPS Assembly
+
 # REGISTER USAGE
 # $s0	input type	1 = CLI, 2 = file
 # $s1	output type	1 = CLI, 2 = file
 # $s2	output file	if applicable
-# $s3	cipher type	1 = Caesar, 2 = Affine
+# $s3	cipher type	1 = Caesar, 2 = Affine, 3 = Vigenere, 4 = Railfence Transposition
 # $s4	input string
 # $s5 	output string
 
@@ -20,22 +27,21 @@
 	rail_prompt:		.asciiz 	"\nEnter rail count: \n"
 	in_file_name:		.asciiz		"input.txt"
 	out_file_name:		.asciiz		"output.txt"
-	out_test:			.asciiz		"the fuck"
 
 .text
-	jal GetInput		# get input type in $s0, input in $s4
-	jal GetOutput		# get output type in $s1, file name in $s2 if applicable
-	jal GetCipher		# get cipher type in $s3
+	jal GetInput						# get input type in $s0, input in $s4
+	jal GetOutput						# get output type in $s1, file name in $s2 if applicable
+	jal GetCipher						# get cipher type in $s3
 	
-	la $s5, output		# $s5 = starting address of output memory 
+	la $s5, output						# $s5 = starting address of output memory 
 	
 	beq $s3, 1, Caesar
 	beq $s3, 2, Affine
 	beq $s3, 3, Vigenere
 	beq $s3, 4, Railfence
 
-CipherReturn:			# return point for each cipher to jump to when it is done looping
-	add $t0, $zero, $zero	# initialize loop counter for output
+CipherReturn:							# return point for each cipher to jump to when it is done looping
+	add $t0, $zero, $zero				# initialize loop counter for output
 	beq $s1, 1, CLIOutput	
 	beq $s1, 2, FileOutput
 
@@ -46,29 +52,29 @@ CipherReturn:			# return point for each cipher to jump to when it is done loopin
 
 ########## START CAESAR CIPHER ##########
 Caesar:
-	la $a0, shift_prompt	# print shift prompt
+	la $a0, shift_prompt				# print shift prompt
 	li $v0, 4
 	syscall
 
-	li $v0, 5		# get shift amount
+	li $v0, 5							# get shift amount
 	syscall
 	
-	move $t0, $v0 		# put shift in $t0
+	move $t0, $v0 						# put shift in $t0
 	
-	add $t1, $zero, $zero 	# loop counter in $t1
+	add $t1, $zero, $zero 				# loop counter in $t1
 	# FALL THROUGH TO CaesarLoop
 
 CaesarLoop:
-	add $t2, $s4, $t1	# $t2 = address of current byte = starting location + loop counter
-	lb $t3, ($t2)		# load current byte of input into $t3
-	beq $t3, 0, CipherReturn# if we reached null characters, quit looping and return above
+	add $t2, $s4, $t1					# $t2 = address of current byte = starting location + loop counter
+	lb $t3, ($t2)						# load current byte of input into $t3
+	beq $t3, 0, CipherReturn			# if we reached null characters, quit looping and return above
 	
-	add $t3, $t3, $t0	# encrypt - $t3 = current byte + shift amount
+	add $t3, $t3, $t0					# encrypt - $t3 = current byte + shift amount
 	
-	add $t4, $s5, $t1	# $t4 = current output memory location = starting location of output memory + loop counter
-	sb $t3, ($t4)		# store shifted byte into current output memory location
+	add $t4, $s5, $t1					# $t4 = current output memory location = starting location of output memory + loop counter
+	sb $t3, ($t4)						# store shifted byte into current output memory location
 	
-	addi $t1, $t1, 1	# increment loop counter
+	addi $t1, $t1, 1					# increment loop counter
 	
 	j CaesarLoop	
 ########### END CAESAR CIPHER ##########
@@ -76,34 +82,34 @@ CaesarLoop:
 
 ########## START AFFINE CIPHER ##########
 Affine:
-	la $a0, shift_prompt	# print shift prompt
+	la $a0, shift_prompt				# print shift prompt
 	li $v0, 4
 	syscall
 
-	la $v0, 5		# get shift amount
+	la $v0, 5							# get shift amount
 	syscall
 	
-	move $t1, $v0 		# put shift in $t1 - previously $s1
-	li $t2, 15		# store affine key in $t2 - previously $s2
-	li $t3, 128		# store alphabet size in $t3 - previously $s3
+	move $t1, $v0 						# put shift in $t1 - previously $s1
+	li $t2, 15							# store affine key in $t2 - previously $s2
+	li $t3, 128							# store alphabet size in $t3 - previously $s3
 	
-	add $t0, $zero, $zero 	# loop counter in $t0
+	add $t0, $zero, $zero 				# loop counter in $t0
 	#F FALL THROUGH TO AffineLoop
 AffineLoop:
-	add $t4, $s4, $t0	# $t4 = address of current byte = starting location + loop counter
-	lb $t5, ($t4)		# load current byte of input into $t5
-	beq $t5, 0, CipherReturn# if we reached null characters, quit looping
+	add $t4, $s4, $t0					# $t4 = address of current byte = starting location + loop counter
+	lb $t5, ($t4)						# load current byte of input into $t5
+	beq $t5, 0, CipherReturn			# if we reached null characters, quit looping
 
-	mult $t5, $t2		# multiply by affine key
-	mflo $t5		# move multiplication result from Lo to $t2
-	add $t6, $t5, $t1	# add shift amount
-	div $t6, $t3		# divide by alphabet size
-	mfhi $t6		# move remainder value from Hi to $t2
+	mult $t5, $t2						# multiply by affine key
+	mflo $t5							# move multiplication result from Lo to $t2
+	add $t6, $t5, $t1					# add shift amount
+	div $t6, $t3						# divide by alphabet size
+	mfhi $t6							# move remainder value from Hi to $t2
 
-	add $t7, $s5, $t0	# $t5 = current output location = starting memory location + loop counter
-	sb $t6, ($t7)		# store encrypted byte into memory location
+	add $t7, $s5, $t0					# $t5 = current output location = starting memory location + loop counter
+	sb $t6, ($t7)						# store encrypted byte into memory location
 	
-	addi $t0, $t0, 1	# increment loop counter
+	addi $t0, $t0, 1					# increment loop counter
 	
 	j AffineLoop	
 ########## END AFFINE CIPHER ##########
@@ -112,50 +118,50 @@ AffineLoop:
 ########## BEGIN VIGENERE CIPHER ##########
 Vigenere:
 	# Key string
-	la $a0, key_prompt		# print key prompt
+	la $a0, key_prompt					# print key prompt
 	li $v0, 4
 	syscall
 
-	la $a0, buffer			# get key string
+	la $a0, buffer						# get key string
 	li $a1, 20
 	li $v0, 8				
 	syscall
 
-	move $t0, $a0			# move keyword string to register $t0
-	li $t1, 128				# put alphabet size in $t1
-	add $t2, $zero, $zero 	# loop counter in $t2
+	move $t0, $a0						# move keyword string to register $t0
+	li $t1, 128							# put alphabet size in $t1
+	add $t2, $zero, $zero 				# loop counter in $t2
 	#F FALL THROUGH TO VigenereLoop
 VigenereLoop:
-	add $t3, $s4, $t2			# $t3 = address of current byte in plaintext = starting location in plaintext + loop counter
-	add $t4, $t0, $t2			# $t2 = address of current byte in keytext = starting location + loop counter
-	lb $t5, ($t3)				# load current byte of plaintext into $t3
-	lb $t6, ($t4)				# load current byte of keytext into $t4
-	beq $t5, 0, CipherReturn	# if we reached null characters, quit looping
+	add $t3, $s4, $t2					# $t3 = address of current byte in plaintext = starting location in plaintext + loop counter
+	add $t4, $t0, $t2					# $t2 = address of current byte in keytext = starting location + loop counter
+	lb $t5, ($t3)						# load current byte of plaintext into $t3
+	lb $t6, ($t4)						# load current byte of keytext into $t4
+	beq $t5, 0, CipherReturn			# if we reached null characters, quit looping
 
-	add $t5, $t5, $t6			# add current letter of plaintext and keytext
-	div $t5, $t1				# divide by alphabet size
-	mfhi $t5					# store remainder value from Hi in $t3 
+	add $t5, $t5, $t6					# add current letter of plaintext and keytext
+	div $t5, $t1						# divide by alphabet size
+	mfhi $t5							# store remainder value from Hi in $t3 
 
-	add $t6, $s5, $t2			# $t5 = current output location = starting memory location + loop counter
-	sb $t5, ($t6)				# store encrypted byte into memory location
+	add $t6, $s5, $t2					# $t5 = current output location = starting memory location + loop counter
+	sb $t5, ($t6)						# store encrypted byte into memory location
 
-	addi $t2, $t2, 1			# increment loop counter
+	addi $t2, $t2, 1					# increment loop counter
 
 	j VigenereLoop	
 ########## END VIGENERE CIPHER ##########
 
 ########## BEGIN RAILFENCE CIPHER ##########
 Railfence:
-	la $a0, rail_prompt	# print shift prompt
+	la $a0, rail_prompt					# print shift prompt
 	li $v0, 4
 	syscall
 
-	la $v0, 5				# get rail count
+	la $v0, 5							# get rail count
 	syscall
 	
-	move $t0, $v0 			# put rail count in $t0, this is the row count
+	move $t0, $v0 						# put rail count in $t0, this is the row count
 	
-	add $t2, $zero, $zero 	# loop/column counter in $t2
+	add $t2, $zero, $zero 				# loop/column counter in $t2
 
 Count_Plaintext:
     add $t1, $s4, $t2					# $t3 = address of current byte in plaintext = starting location + loop/column counter
@@ -165,11 +171,11 @@ Count_Plaintext:
 	j Count_Plaintext
 
 Dec_Row_Count:
-	addi $t3, $t3, -1		# decrement row count
+	addi $t3, $t3, -1					# decrement row count
 	j RailfenceLoop
 
 Inc_Row_Count:	
-	addi $t3, $t3, 1		# increment row count
+	addi $t3, $t3, 1					# increment row count
 	j RailfenceLoop
 
 Flip_Row_Inc:
@@ -219,11 +225,11 @@ RailfenceLoop:
 	beq $t4, 0, Dec_Row_Count			# if decreasing, decrement
 	beq $t4, 1, Inc_Row_Count			# if increasing, increment
 
-	j RailfenceLoop 						# iterate to next character	
+	j RailfenceLoop 					# iterate to next character	
 
 Add_Random:
-	li $a1, 128					# upper bound of random 
-	li $v0, 42					# random int with upper bound
+	li $a1, 128							# upper bound of random 
+	li $v0, 42							# random int with upper bound
 	syscall
 	sb $a0, ($t5)
 
