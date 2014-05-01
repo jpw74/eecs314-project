@@ -15,16 +15,17 @@
 	string_prompt:		.asciiz		"Enter your string: "
 	not_implemented:	.asciiz		"This feature has not been implemented yet.\n"
 	invalid_input:		.asciiz		"Invalid input.\n"
-	caesar_shift:		.asciiz		"Enter shift amount: "
+	shift_prompt:		.asciiz		"Enter shift amount: "
 
 .text
-	jal GetInput		# get input type in $t0, input in $s0
-	jal GetOutput		# get output type in $t1, file name in $t2 if applicable
-	jal GetCipher		# get cipher type in $t3
+	jal GetInput		# get input type in $s0, input in $s4
+	jal GetOutput		# get output type in $s1, file name in $s2 if applicable
+	jal GetCipher		# get cipher type in $s3
 	
 	la $s5, output		# $s5 = starting address of output memory 
 	
 	beq $s3, 1, Caesar
+	beq $s3, 2, Affine
 
 CipherReturn:
 	add $t0, $zero, $zero	# initialize loop counter for output
@@ -36,9 +37,9 @@ CipherReturn:
 ########## END OF PROGRAM - EVERYTHING BELOW IS CALLED INTO AND RETURNS ABOVE ##########
 
 
-########## CAESAR CIPHER ##########
+########## START CAESAR CIPHER ##########
 Caesar:
-	la $a0, caesar_shift	# print shift prompt
+	la $a0, shift_prompt	# print shift prompt
 	li $v0, 4
 	syscall
 
@@ -54,12 +55,51 @@ CaesarLoop:
 	add $t2, $s4, $t1	# $t2 = address of current byte = starting location + loop counter
 	lb $t3, ($t2)		# load current byte of input into $t3
 	beq $t3, 0, CipherReturn# if we reached null characters, quit looping and return above
-	add $t3, $t3, $t0	# $t3 = current byte + shift amount
+	
+	add $t3, $t3, $t0	# encrypt - $t3 = current byte + shift amount
+	
 	add $t4, $s5, $t1	# $t4 = current output memory location = starting location of output memory + loop counter
 	sb $t3, ($t4)		# store shifted byte into current output memory location
+	
 	addi $t1, $t1, 1	# increment loop counter
+	
 	j CaesarLoop	
 ########### END CAESAR CIPHER ##########
+
+
+########## START AFFINE CIPHER ##########
+Affine:
+	la $a0, shift_prompt	# print shift prompt
+	li $v0, 4
+	syscall
+
+	la $v0, 5		# get shift amount
+	syscall
+	
+	move $t1, $v0 		# put shift in $t1 - previously $s1
+	li $t2, 15		# store affine key in $t2 - previously $s2
+	li $t3, 128		# store alphabet size in $t3 - previously $s3
+	
+	add $t0, $zero, $zero 	# loop counter in $t0
+	#F FALL THROUGH TO AffineLoop
+AffineLoop:
+	add $t4, $s4, $t0	# $t4 = address of current byte = starting location + loop counter
+	lb $t5, ($t4)		# load current byte of input into $t5
+	beq $t5, 0, CipherReturn# if we reached null characters, quit looping
+
+	mult $t5, $t2		# multiply by affine key
+	mflo $t5		# move multiplication result from Lo to $t2
+	add $t6, $t5, $t1	# add shift amount
+	div $t6, $t3		# divide by alphabet size
+	mfhi $t6		# move remainder value from Hi to $t2
+
+	add $t7, $s5, $t0	# $t5 = current output location = starting memory location + loop counter
+	sb $t6, ($t7)		# store encrypted byte into memory location
+	
+	addi $t0, $t0, 1	# increment loop counter
+	
+	j AffineLoop	
+########## END AFFINE CIPHER ##########
 
 
 ########## HELPER ROUTINES HERE TIL END ##########
