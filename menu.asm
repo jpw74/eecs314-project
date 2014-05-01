@@ -16,7 +16,8 @@
 	not_implemented:	.asciiz		"This feature has not been implemented yet.\n"
 	invalid_input:		.asciiz		"Invalid input.\n"
 	shift_prompt:		.asciiz		"Enter shift amount: "
-	key_prompt:			.asciiz		"Enter keyword (repeat until it matches the length of the plaintext): "
+	key_prompt:		.asciiz		"Enter keyword (repeat until it matches the length of the plaintext): "
+	file_name:		.ascii		"input.txt"
 
 .text
 	jal GetInput		# get input type in $s0, input in $s4
@@ -148,7 +149,7 @@ GetInput:
 	move $s0, $v0		# put input type in $s0
 	
 	la $t9, GetInput	# start over if they choose file input
-	beq $s0, 2, NotImplemented
+	beq $s0, 2, FileInput
 	beq $s0, 1, CLIInput
 
 	la $t9, GetInput	# start over if fallen through to here
@@ -166,29 +167,12 @@ CLIInput:
 	
 	move $s4, $a0 		# put input in $s4
 	jr $ra			# return into main - $ra was set when jal'ing into GetInput
-<<<<<<< HEAD
 	
 FileInput:
-	la $a0, file_prompt	# print file prompt
-	li $v0, 4
-	syscall
-	
-	la $a0, buffer		# get file name
-	li $a1, 50
-	li $v0, 8
-	syscall
-	
-	la $t0, ($a0)
-	
-	la $a0, ($t0)		# open file
+	la $a0, file_name	# open file
 	li $a1, 0x0000
 	li $v0, 13
 	syscall
-	
-	move $a0, $v0
-	li $v0, 1
-	syscall
-	j Exit
 	
 	move $a0, $v0		# put file descriptor in $a0
 	la $a1, buffer		# read into buffer
@@ -196,11 +180,9 @@ FileInput:
 	li $v0, 14
 	syscall
 	
-	move $s4, $a0
+	move $s4, $a1
 	
 	jr $ra
-=======
->>>>>>> parent of 5d4570b... Encrypt a given file
 
 GetOutput:
 	la $a0, out_type_prompt	# display output type prompt
