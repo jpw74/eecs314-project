@@ -290,15 +290,16 @@ FileInput:
 	
 	li $t0, 0       	# loop counter
 	li $t1, 15      	# loop end
-clean:
-    	beq $t0, $t1, L5
+fin_clean:			# need to clean file name of linefeed characters - code is duplicated below, but oh well
+    	beq $t0, $t1, fin_continue
     	lb $t3, fin($t0)
-    	bne $t3, 0x0a, L6
+    	bne $t3, 0x0a, fin_loop
     	sb $zero, fin($t0)
-L6:
+fin_loop:
 	addi $t0, $t0, 1
-	j clean
-L5:
+	j fin_clean
+fin_continue:
+
 	la $a0, fin		# open file
 	li $a1, 0x0000
 	li $v0, 13
@@ -379,15 +380,15 @@ FileOutput:
 	
 	li $t0, 0       	# loop counter
 	li $t1, 15      	# loop end
-clean1:
-    	beq $t0, $t1, L51
+fout_clean:			# need to clean the file name of linefeed characters - duplicated code from above, but oh well
+    	beq $t0, $t1, fout_continue
     	lb $t3, fout($t0)
-    	bne $t3, 0x0a, L61
+    	bne $t3, 0x0a, fout_loop
     	sb $zero, fout($t0)
-L61:
+fout_loop:
 	addi $t0, $t0, 1
-	j clean1
-L51:
+	j fout_clean
+fout_continue:
 
 	la $a0, fout	# open file in write mode
 	li $a1, 0x0001		
