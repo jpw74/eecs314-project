@@ -17,7 +17,8 @@
 	invalid_input:		.asciiz		"Invalid input.\n"
 	shift_prompt:		.asciiz		"Enter shift amount: "
 	key_prompt:		.asciiz		"Enter keyword (repeat until it matches the length of the plaintext): "
-	file_name:		.ascii		"input.txt"
+	in_file_name:		.asciiz		"input.txt"
+	out_file_name:		.asciiz		"output.txt"
 
 .text
 	jal GetInput		# get input type in $s0, input in $s4
@@ -104,6 +105,8 @@ AffineLoop:
 	j AffineLoop	
 ########## END AFFINE CIPHER ##########
 
+
+########## BEGIN VIGENERE CIPHER ##########
 Vigenere:
 	# Key string
 	la $a0, key_prompt		# print key prompt
@@ -136,6 +139,8 @@ VigenereLoop:
 	addi $t2, $t2, 1			# increment loop counter
 
 	j VigenereLoop	
+########## END VIGENERE CIPHER ##########
+
 
 ########## HELPER ROUTINES HERE TIL END ##########
 GetInput:
@@ -169,18 +174,23 @@ CLIInput:
 	jr $ra			# return into main - $ra was set when jal'ing into GetInput
 	
 FileInput:
-	la $a0, file_name	# open file
+	la $a0, in_file_name	# open file
 	li $a1, 0x0000
 	li $v0, 13
 	syscall
 	
-	move $a0, $v0		# put file descriptor in $a0
+	move $t0, $v0		# put file descriptor in $t0
+	move $a0, $t0		# put file descriptor in $a0
 	la $a1, buffer		# read into buffer
 	li $a2, 20
 	li $v0, 14
 	syscall
 	
-	move $s4, $a1
+	move $s4, $a1		# move input into $s4
+	
+	move $a0, $t0		# put file descriptor in $a0
+	li $v0, 16		# close file
+	syscall
 	
 	jr $ra
 
@@ -231,6 +241,9 @@ CLIOutput:
 	syscall
 	addi $t0, $t0, 1
 	j CLIOutput
+
+FileOutput:
+	
 
 InvalidInput:
 	# helper routine for invalid input
