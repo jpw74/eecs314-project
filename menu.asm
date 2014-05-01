@@ -2,7 +2,7 @@
 # $s0	input type	1 = CLI, 2 = file
 # $s1	output type	1 = CLI, 2 = file
 # $s2	output file	if applicable
-# $s3	cipher type	1 = Caesar, 2 = Aphine
+# $s3	cipher type	1 = Caesar, 2 = Affine
 # $s4	input string
 # $s5 	output string
 
@@ -11,11 +11,12 @@
 	output:			.space		20
 	in_type_prompt:		.asciiz		"Would you like to input from the command line [1] or a file [2]? "
 	out_type_prompt:	.asciiz		"Would you like to write to the command line [1] or a file [2]? "
-	cipher_prompt:		.asciiz		"Select which cipher you would like:\n[1] Caesar\n[2] Affine\n"
+	cipher_prompt:		.asciiz		"Select which cipher you would like:\n[1] Caesar\n[2] Affine\n[3] Vigenere\n"
 	string_prompt:		.asciiz		"Enter your string: "
 	not_implemented:	.asciiz		"This feature has not been implemented yet.\n"
 	invalid_input:		.asciiz		"Invalid input.\n"
 	shift_prompt:		.asciiz		"Enter shift amount: "
+	key_prompt:			.asciiz		"Enter keyword (repeat until it matches the length of the plaintext): "
 
 .text
 	jal GetInput		# get input type in $s0, input in $s4
@@ -26,6 +27,7 @@
 	
 	beq $s3, 1, Caesar
 	beq $s3, 2, Affine
+	beq $s3, 3, Vigenere
 
 CipherReturn:
 	add $t0, $zero, $zero	# initialize loop counter for output
@@ -101,6 +103,38 @@ AffineLoop:
 	j AffineLoop	
 ########## END AFFINE CIPHER ##########
 
+Vigenere:
+	# Key string
+	la $a0, key_prompt		# print key prompt
+	li $v0, 4
+	syscall
+
+	la $a0, buffer			# get key string
+	li $a1, 20
+	li $v0, 8				
+	syscall
+
+	move $t0, $a0			# move keyword string to register $t0
+	li $t1, 128				# put alphabet size in $t1
+	add $t2, $zero, $zero 	# loop counter in $t2
+
+VigenereLoop:
+	add $t3, $s4, $t2			# $t3 = address of current byte in plaintext = starting location in plaintext + loop counter
+	add $t4, $t0, $t2			# $t2 = address of current byte in keytext = starting location + loop counter
+	lb $t5, ($t3)				# load current byte of plaintext into $t3
+	lb $t6, ($t4)				# load current byte of keytext into $t4
+	beq $t5, 0, CipherReturn	# if we reached null characters, quit looping
+
+	add $t5, $t5, $t6			# add current letter of plaintext and keytext
+	div $t5, $t1				# divide by alphabet size
+	mfhi $t5					# store remainder value from Hi in $t3 
+
+	add $t6, $s5, $t2			# $t5 = current output location = starting memory location + loop counter
+	sb $t5, ($t6)				# store encrypted byte into memory location
+
+	addi $t2, $t2, 1			# increment loop counter
+
+	j VigenereLoop	
 
 ########## HELPER ROUTINES HERE TIL END ##########
 GetInput:
@@ -165,7 +199,7 @@ GetCipher:
 	move $s3, $v0		# put cipher type in $s3
 
 	slti $t0, $s3, 1	# if cipher type is less than 1 or greater than 2 => invalid input => start over
-	sgt $t0, $s3, 2
+	sgt $t0, $s3, 3
 	la $t9, GetCipher
 	beq $t8, 1, InvalidInput
 	

@@ -53,35 +53,35 @@ Flip_Row_Dec:
 	j Dec_Row_Count
 
 Create_Rail_Fence:
-	addi $t0, $t0, -1 		# take one off length to account for null character
-	move $s2, $t0			# store plaintext length in $s2, this is the column count
-	li $t0, 0				# reset loop counter
+	addi $t0, $t0, -1 					# take one off length to account for null character
+	move $s2, $t0						# store plaintext length in $s2, this is the column count
+	li $t0, 0							# reset loop counter
 
-	li $t3, 1				# byte count of each cell in 2D array
-	mult $s1, $s2			# multiply array dimensions row/column
+	li $t3, 1							# byte count of each cell in 2D array
+	mult $s1, $s2						# multiply array dimensions row/column
 	mflo $a0
-	mult $a0, $t3			# assign byte counts
-	li $v0, 9				# allocate heap memory for array
+	mult $a0, $t3						# assign byte counts
+	li $v0, 9							# allocate heap memory for array
 	syscall
-	move $s3, $v0			# store array address in $s3
+	move $s3, $v0						# store array address in $s3
 
-	add $t1, $zero, $zero	# initialize row counter
-	add $t5, $zero, $zero	# initialize row state, 1 is increment, 0 is decrement
+	add $t1, $zero, $zero				# initialize row counter
+	add $t5, $zero, $zero				# initialize row state, 1 is increment, 0 is decrement
 
 Loop:
-	add $t2, $s0, $t0		# $t2 = address of current byte = starting location + loop/column counter
-	lb $t3, ($t2)					# load current byte of input into $t3
-	beq $t3, 0, Reset_Counter		# if we reached null characters, quit looping and print array
+	add $t2, $s0, $t0					# $t2 = address of current byte = starting location + loop/column counter
+	lb $t3, ($t2)						# load current byte of input into $t3
+	beq $t3, 0, Reset_Counter			# if we reached null characters, quit looping and print array
 
 	# Store in column major order in array at $s3
 	# array address = row + (col * numrows)
 	# $t4 = $t1 + ($t0 * $s1)
 
-	mult $t0, $s1				# multiply current column num by total number of rows
-	mflo $t4					# move result to $t4
-	add $t4, $t4, $t1			# add row count to $t4
-	add $t4, $s3, $t4			# $t4 = address in array for current character
-	sb $t3, ($t4)				# store current byte in array address
+	mult $t0, $s1						# multiply current column num by total number of rows
+	mflo $t4							# move result to $t4
+	add $t4, $t4, $t1					# add row count to $t4
+	add $t4, $s3, $t4					# $t4 = address in array for current character
+	sb $t3, ($t4)						# store current byte in array address
 
 	addi $t0, $t0, 1			# increment column counter
 	beq $t1, $s1, Flip_Row_Dec	# reached bottom row
