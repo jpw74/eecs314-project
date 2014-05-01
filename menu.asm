@@ -1,7 +1,6 @@
 # REGISTER USAGE
 # $s0	input type	1 = CLI, 2 = file
 # $s1	output type	1 = CLI, 2 = file
-# $s2	output file	if applicable
 # $s3	cipher type	1 = Caesar, 2 = Affine
 # $s4	input string
 # $s5 	output string
