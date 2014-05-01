@@ -19,7 +19,8 @@
 	rail_prompt:		.asciiz 	"\nEnter rail count: \n"
 	in_file_name:		.asciiz		"input.txt"
 	out_file_name:		.asciiz		"output.txt"
-	file_prompt:		.asciiz		"Enter file name: "
+	file_prompt:		.asciiz		"Enter file name (relative to current directory): "
+	file_out_prompt:	.asciiz		"Enter output file name (relative to current directory): "
 	fin:			.ascii		""
 	fout:			.ascii		""
 
@@ -367,7 +368,7 @@ CLIOutput:
 	j CLIOutput
 
 FileOutput:	
-	la $a0, file_prompt	# print file name prompt
+	la $a0, file_out_prompt	# print file name prompt
 	li $v0, 4
 	syscall
 	
