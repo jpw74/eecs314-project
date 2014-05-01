@@ -174,10 +174,26 @@ CLIInput:
 	jr $ra			# return into main - $ra was set when jal'ing into GetInput
 	
 FileInput:
-	la $a0, file_name	# open file
+	la $a0, file_prompt	# print file prompt
+	li $v0, 4
+	syscall
+	
+	la $a0, buffer		# get file name
+	li $a1, 50
+	li $v0, 8
+	syscall
+	
+	la $t0, ($a0)
+	
+	la $a0, ($t0)		# open file
 	li $a1, 0x0000
 	li $v0, 13
 	syscall
+	
+	move $a0, $v0
+	li $v0, 1
+	syscall
+	j Exit
 	
 	move $a0, $v0		# put file descriptor in $a0
 	la $a1, buffer		# read into buffer
@@ -185,7 +201,7 @@ FileInput:
 	li $v0, 14
 	syscall
 	
-	move $s4, $a1
+	move $s4, $a0
 	
 	jr $ra
 
