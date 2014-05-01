@@ -367,9 +367,28 @@ CLIOutput:
 	j CLIOutput
 
 FileOutput:	
+	la $a0, file_prompt	# print file name prompt
+	li $v0, 4
+	syscall
 	
+	la $a0, fout		# get the file name
+	li $a1, 15
+	li $v0, 8
+	syscall
+	
+	li $t0, 0       	# loop counter
+	li $t1, 15      	# loop end
+clean1:
+    	beq $t0, $t1, L51
+    	lb $t3, fout($t0)
+    	bne $t3, 0x0a, L61
+    	sb $zero, fout($t0)
+L61:
+	addi $t0, $t0, 1
+	j clean1
+L51:
 
-	la $a0, out_file_name	# open file in write mode
+	la $a0, fout	# open file in write mode
 	li $a1, 0x0001		
 	li $v0, 13
 	syscall
