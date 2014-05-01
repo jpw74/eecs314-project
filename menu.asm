@@ -34,7 +34,7 @@
 	beq $s3, 3, Vigenere
 	beq $s3, 4, Railfence
 
-CipherReturn:
+CipherReturn:			# return point for each cipher to jump to when it is done looping
 	add $t0, $zero, $zero	# initialize loop counter for output
 	beq $s1, 1, CLIOutput	
 	beq $s1, 2, FileOutput
@@ -345,39 +345,18 @@ CLIOutput:
 	addi $t0, $t0, 1
 	j CLIOutput
 
-FileOutput:
-	#la $a0, ($s5)
-	#li $v0, 4
-	#syscall
-	#j Exit
-	la $t0, 0x0001		# write flag
-	la $t1, 0x0008		# append flag
-	or $t2, $t0, $t1	# combine flags
-	
-	la $a0, out_file_name	# open file in append mode
-	la $a1 ($t2)		
+FileOutput:	
+	la $a0, out_file_name	# open file in write mode
+	li $a1, 0x0001		
 	li $v0, 13
 	syscall
 	
-	move $t0, $v0		# put file descriptor in $t0
-	# FALL THROUGH TO FileOutLoop
-FileOutLoop:
-	add $t1, $s5, $t0	# $t1 is address of current output byte
-	lb $t2, ($t1)		# load current output byte into $t2
-	beq $t2, 0, FileExit	# exit if we've gotten to null characters
-
-	move $a0, $t0		# put file descriptor in $a0
-	la $a1, ($t1)		# write output to file
-	li $a2, 1		# one byte at a time - truly terrible
+	move $a0, $v0		# put file descriptor in $a0
+	la $a1, ($s5)
+	li $a2, 20
 	li $v0, 15
 	syscall
 	
-	addi $t0, $t0, 1
-	j FileOutLoop
-
-FileExit:
-	# helper return to close file and exit
-	move $a0, $t0		# put file descriptor in $a0
 	li $v0, 16		# close file
 	syscall
 	j Exit
