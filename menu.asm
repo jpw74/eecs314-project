@@ -19,6 +19,9 @@
 	rail_prompt:		.asciiz 	"\nEnter rail count: \n"
 	in_file_name:		.asciiz		"input.txt"
 	out_file_name:		.asciiz		"output.txt"
+	file_prompt:		.asciiz		"Enter file name: "
+	fin:			.ascii		""
+	fout:			.ascii		""
 
 .text
 	jal GetInput		# get input type in $s0, input in $s4
@@ -275,7 +278,27 @@ CLIInput:
 	jr $ra			# return into main - $ra was set when jal'ing into GetInput
 	
 FileInput:
-	la $a0, in_file_name	# open file
+	la $a0, file_prompt	# print file name prompt
+	li $v0, 4
+	syscall
+	
+	la $a0, fin	# get the file name
+	li $a1, 15
+	li $v0, 8
+	syscall
+	
+	li $t0, 0       	# loop counter
+	li $t1, 15      	# loop end
+clean:
+    	beq $t0, $t1, L5
+    	lb $t3, fin($t0)
+    	bne $t3, 0x0a, L6
+    	sb $zero, fin($t0)
+L6:
+	addi $t0, $t0, 1
+	j clean
+L5:
+	la $a0, fin		# open file
 	li $a1, 0x0000
 	li $v0, 13
 	syscall
@@ -344,6 +367,8 @@ CLIOutput:
 	j CLIOutput
 
 FileOutput:	
+	
+
 	la $a0, out_file_name	# open file in write mode
 	li $a1, 0x0001		
 	li $v0, 13
