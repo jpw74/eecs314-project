@@ -16,11 +16,10 @@
 	not_implemented:	.asciiz		"This feature has not been implemented yet.\n"
 	invalid_input:		.asciiz		"Invalid input.\n"
 	shift_prompt:		.asciiz		"Enter shift amount: "
-	key_prompt:			.asciiz		"Enter keyword (repeat until it matches the length of the plaintext): "
+	key_prompt:		.asciiz		"Enter keyword (repeat until it matches the length of the plaintext): "
 	rail_prompt:		.asciiz 	"\nEnter rail count: \n"
 	in_file_name:		.asciiz		"input.txt"
 	out_file_name:		.asciiz		"output.txt"
-	out_test:			.asciiz		"the fuck"
 
 .text
 	jal GetInput		# get input type in $s0, input in $s4
