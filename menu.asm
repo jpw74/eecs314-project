@@ -14,8 +14,8 @@
 # $s5 	output string
 
 .data
-	buffer: 		.space 		20
-	output:			.space		20
+	buffer: 		.space 		255
+	output:			.space		255
 	in_type_prompt:		.asciiz		"Would you like to input from the command line [1] or a file [2]? "
 	out_type_prompt:	.asciiz		"Would you like to write to the command line [1] or a file [2]? "
 	cipher_prompt:		.asciiz		"Select which cipher you would like:\n[1] Caesar\n[2] Affine\n[3] Vigenere\n[4] Railfence Transposition\n[5] Playfair\n"
@@ -127,7 +127,7 @@ Vigenere:
 	syscall
 
 	la $a0, buffer						# get key string
-	li $a1, 20
+	li $a1, 255
 	li $v0, 8				
 	syscall
 
@@ -279,7 +279,7 @@ CLIInput:
 	syscall
 	
 	la $a0, buffer		# get input
-	li $a1, 20
+	li $a1, 255
 	li $v0, 8
 	syscall
 	
@@ -317,7 +317,7 @@ fin_continue:
 	
 	move $a0, $t0		# put file descriptor in $a0
 	la $a1, buffer		# read into buffer
-	li $a2, 20
+	li $a2, 255
 	li $v0, 14
 	syscall
 	
@@ -405,7 +405,7 @@ fout_continue:
 	
 	move $a0, $v0		# put file descriptor in $a0
 	la $a1, ($s5)
-	li $a2, 20
+	li $a2, 255
 	li $v0, 15
 	syscall
 	
