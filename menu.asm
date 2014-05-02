@@ -8,8 +8,12 @@
 # REGISTER USAGE
 # $s0	input type	1 = CLI, 2 = file
 # $s1	output type	1 = CLI, 2 = file
+<<<<<<< HEAD
 # $s2	output file	if applicable
 # $s3	cipher type	1 = Caesar, 2 = Affine, 3 = Vigenere, 4 = Railfence Transposition
+=======
+# $s3	cipher type	1 = Caesar, 2 = Affine
+>>>>>>> b24a962e7efa4a2799f8ebe05cff46239cf16c02
 # $s4	input string
 # $s5 	output string
 
@@ -18,15 +22,22 @@
 	output:			.space		20
 	in_type_prompt:		.asciiz		"Would you like to input from the command line [1] or a file [2]? "
 	out_type_prompt:	.asciiz		"Would you like to write to the command line [1] or a file [2]? "
-	cipher_prompt:		.asciiz		"Select which cipher you would like:\n[1] Caesar\n[2] Affine\n[3] Vigenere\n[4] Railfence Transposition\n"
+	cipher_prompt:		.asciiz		"Select which cipher you would like:\n[1] Caesar\n[2] Affine\n[3] Vigenere\n[4] Railfence Transposition\n[5] Playfair\n"
 	string_prompt:		.asciiz		"Enter your string: "
 	not_implemented:	.asciiz		"This feature has not been implemented yet.\n"
 	invalid_input:		.asciiz		"Invalid input.\n"
 	shift_prompt:		.asciiz		"Enter shift amount: "
-	key_prompt:			.asciiz		"Enter keyword (repeat until it matches the length of the plaintext): "
+	key_prompt:		.asciiz		"Enter keyword (repeat until it matches the length of the plaintext): "
 	rail_prompt:		.asciiz 	"\nEnter rail count: \n"
 	in_file_name:		.asciiz		"input.txt"
 	out_file_name:		.asciiz		"output.txt"
+<<<<<<< HEAD
+=======
+	file_prompt:		.asciiz		"Enter file name (relative to current directory): "
+	file_out_prompt:	.asciiz		"Enter output file name (relative to current directory): "
+	fin:			.ascii		""
+	fout:			.ascii		""
+>>>>>>> b24a962e7efa4a2799f8ebe05cff46239cf16c02
 
 .text
 	jal GetInput						# get input type in $s0, input in $s4
@@ -150,6 +161,7 @@ VigenereLoop:
 	j VigenereLoop	
 ########## END VIGENERE CIPHER ##########
 
+
 ########## BEGIN RAILFENCE CIPHER ##########
 Railfence:
 	la $a0, rail_prompt					# print shift prompt
@@ -250,6 +262,7 @@ Reset_Counter:
 	j Loop_Array
 ########## END RAILFENCE CIPHER ##########
 
+
 ########## HELPER ROUTINES HERE TIL END ##########
 GetInput:
 	la $a0, in_type_prompt	# display input prompt
@@ -261,9 +274,8 @@ GetInput:
 	
 	move $s0, $v0		# put input type in $s0
 	
-	la $t9, GetInput	# start over if they choose file input
-	beq $s0, 2, FileInput
 	beq $s0, 1, CLIInput
+	beq $s0, 2, FileInput
 
 	la $t9, GetInput	# start over if fallen through to here
 	j InvalidInput		# using helper InvalidInput label for consistency
@@ -282,7 +294,28 @@ CLIInput:
 	jr $ra			# return into main - $ra was set when jal'ing into GetInput
 	
 FileInput:
-	la $a0, in_file_name	# open file
+	la $a0, file_prompt	# print file name prompt
+	li $v0, 4
+	syscall
+	
+	la $a0, fin	# get the file name
+	li $a1, 15
+	li $v0, 8
+	syscall
+	
+	li $t0, 0       	# loop counter
+	li $t1, 15      	# loop end
+fin_clean:			# need to clean file name of linefeed characters - code is duplicated below, but oh well
+    	beq $t0, $t1, fin_continue
+    	lb $t3, fin($t0)
+    	bne $t3, 0x0a, fin_loop
+    	sb $zero, fin($t0)
+fin_loop:
+	addi $t0, $t0, 1
+	j fin_clean
+fin_continue:
+
+	la $a0, fin		# open file
 	li $a1, 0x0000
 	li $v0, 13
 	syscall
@@ -313,17 +346,13 @@ GetOutput:
 	
 	move $s1, $v0		# put output type in $s1
 	
-	la $t9, GetOutput	# start over if they chose file output
-	beq $s1, 2, DummyReturn
-	beq $s1, 1, DummyReturn
+	slti $t0, $s1, 1	# invalid input if output type is less than 1 or greater than 2
+	sgt $t0, $s1, 2
+	la $t9, GetOutput
+	beq $t0, 1, InvalidInput
 	
-	la $t9, GetOutput	# invalid input if fallen through to here
-	j InvalidInput		# using InvalidInput label for consistency
-	
-DummyReturn:
-	# dummy routine to exit from GetOutput - $ra is saved from jal'ing into GetOutput
 	jr $ra
-
+	
 GetCipher:
 	la $a0, cipher_prompt	# display cipher type prompt
 	li $v0, 4
@@ -333,6 +362,9 @@ GetCipher:
 	syscall
 	
 	move $s3, $v0		# put cipher type in $s3
+	
+	la $t9, GetCipher	# playfair not implemented
+	beq $s3, 5, NotImplemented
 
 	slti $t0, $s3, 1	# if cipher type is less than 1 or greater than 2 => invalid input => start over
 	sgt $t0, $s3, 4
@@ -352,7 +384,28 @@ CLIOutput:
 	j CLIOutput
 
 FileOutput:	
-	la $a0, out_file_name	# open file in write mode
+	la $a0, file_out_prompt	# print file name prompt
+	li $v0, 4
+	syscall
+	
+	la $a0, fout		# get the file name
+	li $a1, 15
+	li $v0, 8
+	syscall
+	
+	li $t0, 0       	# loop counter
+	li $t1, 15      	# loop end
+fout_clean:			# need to clean the file name of linefeed characters - duplicated code from above, but oh well
+    	beq $t0, $t1, fout_continue
+    	lb $t3, fout($t0)
+    	bne $t3, 0x0a, fout_loop
+    	sb $zero, fout($t0)
+fout_loop:
+	addi $t0, $t0, 1
+	j fout_clean
+fout_continue:
+
+	la $a0, fout	# open file in write mode
 	li $a1, 0x0001		
 	li $v0, 13
 	syscall
