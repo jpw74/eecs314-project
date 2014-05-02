@@ -362,7 +362,7 @@ GetCipher:
 	slti $t0, $s3, 1	# if cipher type is less than 1 or greater than 2 => invalid input => start over
 	sgt $t0, $s3, 4
 	la $t9, GetCipher
-	beq $t8, 1, InvalidInput
+	beq $t0, 1, InvalidInput
 	
 	jr $ra
 
