@@ -8,12 +8,8 @@
 # REGISTER USAGE
 # $s0	input type	1 = CLI, 2 = file
 # $s1	output type	1 = CLI, 2 = file
-<<<<<<< HEAD
 # $s2	output file	if applicable
 # $s3	cipher type	1 = Caesar, 2 = Affine, 3 = Vigenere, 4 = Railfence Transposition
-=======
-# $s3	cipher type	1 = Caesar, 2 = Affine
->>>>>>> b24a962e7efa4a2799f8ebe05cff46239cf16c02
 # $s4	input string
 # $s5 	output string
 
@@ -31,13 +27,10 @@
 	rail_prompt:		.asciiz 	"\nEnter rail count: \n"
 	in_file_name:		.asciiz		"input.txt"
 	out_file_name:		.asciiz		"output.txt"
-<<<<<<< HEAD
-=======
 	file_prompt:		.asciiz		"Enter file name (relative to current directory): "
 	file_out_prompt:	.asciiz		"Enter output file name (relative to current directory): "
 	fin:			.ascii		""
 	fout:			.ascii		""
->>>>>>> b24a962e7efa4a2799f8ebe05cff46239cf16c02
 
 .text
 	jal GetInput						# get input type in $s0, input in $s4
